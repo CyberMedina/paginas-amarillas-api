@@ -11,7 +11,7 @@ load_dotenv()
 # Reemplaza 'TU_API_KEY' con tu clave de API de Google Places
 API_KEY = os.getenv('GOOGLE_API_KEY')
 
-def find_place_id(place_name):
+def find_place_id(place_name, location=None):
     url = f'https://maps.googleapis.com/maps/api/place/findplacefromtext/json'
     params = {
         'input': place_name,
@@ -19,6 +19,8 @@ def find_place_id(place_name):
         'fields': 'place_id',
         'key': API_KEY
     }
+    if location:
+        params['locationbias'] = f'point:{location}'
     response = requests.get(url, params=params)
     result = response.json()
     if result['candidates']:
@@ -38,10 +40,13 @@ def get_place_details(place_id):
 @app.route('/get_place_info', methods=['GET'])
 def get_place_info():
     place_name = request.args.get('place_name')
+    lat = request.args.get('lat')
+    lng = request.args.get('lng')
     if not place_name:
         return jsonify({'error': 'Se requiere el parámetro place_name'}), 400
 
-    place_id = find_place_id(place_name)
+    location = f'{lat},{lng}' if lat and lng else None
+    place_id = find_place_id(place_name, location)
     if not place_id:
         return jsonify({'error': 'Lugar no encontrado'}), 404
 
